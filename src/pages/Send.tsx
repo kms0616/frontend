@@ -62,7 +62,7 @@ export default function CardSendPage() {
 
         {hasCards ? (
           <div className="mt-[36px]">
-            <h2 className="ml-[20px] h-[22px] w-[234px] font-['Pretendard'] text-[16px] font-bold leading-[22px] text-black">
+            <h2 className="ml-[20px] h-[22px] w-[234px] font-['Pretendard'] text-[24px] font-bold leading-[22px] text-black">
               보낼 카드를 선택하세요
             </h2>
 
@@ -110,7 +110,11 @@ export default function CardSendPage() {
       </section>
 
       {sendStatus !== "idle" && (
-        <SendModal status={sendStatus} onClose={() => setSendStatus("idle")} />
+        <SendModal
+          status={sendStatus}
+          onClose={() => setSendStatus("idle")}
+          onSuccessConfirm={() => navigate("/mystery")}
+        />
       )}
     </main>
   );
@@ -145,9 +149,11 @@ function EmptyCard() {
 function SendModal({
   status,
   onClose,
+  onSuccessConfirm,
 }: {
   status: SendStatus;
   onClose: () => void;
+  onSuccessConfirm: () => void;
 }) {
   if (status === "sending") {
     return (
@@ -184,7 +190,7 @@ function SendModal({
 
         <button
           type="button"
-          onClick={onClose}
+          onClick={status === "success" ? onSuccessConfirm : onClose}
           className="mt-[32px] flex h-[56px] w-[304px] items-center justify-center rounded-[16px] bg-[#4759A6] font-['Pretendard'] text-[20px] font-semibold leading-[30px] text-white"
         >
           확인
