@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 const existingNames = ["반쯤 젖은 우산", "김민서", "테스트"];
 
 export default function LoginPage() {
@@ -7,6 +7,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("2~10자 이내의 닉네임");
   const [isChecked, setIsChecked] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
+  const navigate = useNavigate();
 
   const isValidLength = nickname.length >= 2 && nickname.length <= 10;
 
@@ -43,6 +44,8 @@ export default function LoginPage() {
     if (!isValidLength || !isChecked || !isAvailable) return;
 
     console.log("시작:", nickname);
+
+    navigate("/main");
   };
 
   return (

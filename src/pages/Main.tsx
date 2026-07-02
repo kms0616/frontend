@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 const userName = "반쯤 젖은 우산";
 
 const counts = {
@@ -10,18 +11,22 @@ const menuItems = [
   {
     title: "나의 생존법 작성하기",
     image: "/images/write-card.png",
+    path: "/write",
   },
   {
     title: "카드 보내기",
     image: "/images/send-card.svg",
+    path: "/send",
   },
   {
     title: "보관함 보기",
     image: "/images/storage-card.svg",
+    path: "/storage",
   },
 ];
 
 export default function HomePage() {
+  const navigate = useNavigate();
   return (
     <main className="mx-auto h-[852px] w-[393px] rounded-[48px] bg-[#FBFBFB] font-['Pretendard']">
       <section className="px-[20px] py-[32px]">
@@ -35,6 +40,7 @@ export default function HomePage() {
           <div className="flex flex-col items-center">
             <button
               type="button"
+              onClick={() => navigate(menuItems[0].path)}
               className="h-[224px] w-[353px] rounded-[24px] cursor-pointer overflow-hidden rounded-[2px]"
             >
               <img
@@ -49,6 +55,7 @@ export default function HomePage() {
                 <button
                   key={item.title}
                   type="button"
+                  onClick={() => navigate(item.path)}
                   className="h-[159px] w-[169px] cursor-pointer overflow-hidden rounded-[24px]"
                 >
                   <img
