@@ -76,28 +76,37 @@ export default function ReceivedCardPage() {
         </header>
 
         <div className="mt-[42px] px-[20px]">
-          {/* 카드 */}
-          <div className="relative mt-[24px] h-[600px] w-[353px] overflow-visible rounded-[12px] border border-black">
+          <div className="h-[90px] w-[353px] rounded-[24px] border border-black px-[20px] py-[18px]">
+            <div className="flex h-[24px] items-center gap-[12px]">
+              <img
+                src="/images/email.svg"
+                alt=""
+                className="h-[20px] w-[20px]"
+              />
+
+              <p className="font-['Pretendard'] text-[14px] font-semibold text-black">
+                {card.authorNickname}님의 메시지
+              </p>
+            </div>
+
+            <p className="mt-[8px] font-['Pretendard'] text-[16px] font-semibold text-black">
+              {card.message}
+            </p>
+          </div>
+
+          <div className="relative mt-[24px] h-[600px] w-[353px] overflow-visible rounded-[12px]">
+            <img
+              src={mainEffectAsset.frame}
+              alt=""
+              className="absolute left-[-1px] top-[-5px] h-[610px] w-[363px] max-w-none"
+            />
+
             <div className="absolute inset-0 px-[37px] pt-[52px] text-center">
-              <div
-                className={`mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full ${
-                  primaryMeta?.iconColor ?? "bg-[#9BC3FE]"
-                }`}
-              >
-                {card.primaryEffect.icon ? (
-                  <img
-                    src={card.primaryEffect.icon}
-                    alt=""
-                    className="h-[48px] w-[48px] object-contain"
-                  />
-                ) : primaryMeta?.icon ? (
-                  <img
-                    src={primaryMeta.icon}
-                    alt=""
-                    className="h-[48px] w-[48px] object-contain"
-                  />
-                ) : null}
-              </div>
+              <img
+                src={mainEffectAsset.icon}
+                alt=""
+                className="mx-auto h-[92px] w-[92px]"
+              />
 
               <h2 className="mt-[24px] font-['KIMM'] text-[24px] font-bold leading-[34px] tracking-[-0.03em] text-black">
                 {card.title}
@@ -107,7 +116,8 @@ export default function ReceivedCardPage() {
                 {card.description}
               </p>
 
-              <div className="mt-[24px] flex justify-end font-['Pretendard'] text-[12px] text-[#9B9B9B]">
+              <div className="mt-[24px] flex justify-between font-['Pretendard'] text-[12px] text-[#9B9B9B]">
+                <span>{card.authorNickname}</span>
                 <span>{new Date(card.createdAt).toLocaleDateString()}</span>
               </div>
 
@@ -135,25 +145,28 @@ export default function ReceivedCardPage() {
 
                 <div className="mt-[8px] flex flex-wrap gap-[12px]">
                   {card.effects.map((effect) => {
-                    const meta = getEffectMeta(effect.effectTypeId);
+                    const asset = effectAssetMap[effect.effectTypeId] ?? {
+                      color: "#E5F7FE",
+                      text: "#4759A6",
+                      icon: card.primaryEffect.icon,
+                      frame: "/images/cards/cold-frame.svg",
+                    };
+
                     return (
                       <div
                         key={effect.effectTypeId}
-                        className={`flex items-center gap-[4px] rounded-full px-[12px] py-[4px] ${
-                          meta?.activeColor.split(" ")[1] ?? "bg-gray-100"
-                        }`}
+                        className="flex items-center gap-[4px] rounded-full px-[12px] py-[4px]"
+                        style={{ backgroundColor: asset.color }}
                       >
-                        {meta?.icon && (
-                          <img
-                            src={meta.icon}
-                            alt=""
-                            className="h-[14px] w-[14px]"
-                          />
-                        )}
+                        <img
+                          src={asset.icon}
+                          alt=""
+                          className="h-[14px] w-[14px]"
+                        />
+
                         <span
-                          className={`font-['Pretendard'] text-[12px] font-semibold ${
-                            meta?.textColor ?? "text-black"
-                          }`}
+                          className="font-['Pretendard'] text-[12px] font-semibold"
+                          style={{ color: asset.text }}
                         >
                           {effect.name} {effect.level}
                         </span>

@@ -6,6 +6,33 @@ import { lightenColor } from '../utils/color';
 interface CardStorageProps {
   onFolderClick?: (folder: Folder) => void;
 }
+type CollectionCard = {
+  collectionCardId: number;
+  cardId: number;
+  source: "CREATED" | "RECEIVED";
+  favorite: boolean;
+  title: string;
+  description: string;
+  recommendedSituation: string;
+  difficulty: number;
+  imageUrl: string;
+  message: string;
+  primaryEffect: {
+    effectTypeId: number;
+    name: string;
+    color: string;
+    icon: string;
+  };
+  collectedAt: string;
+};
+
+type Folder = {
+  id: number;
+  name: string;
+  bgColor: string;
+  frontColor: string;
+  count?: number;
+};
 
 export default function CardStorage({ onFolderClick }: CardStorageProps) {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -79,11 +106,11 @@ export default function CardStorage({ onFolderClick }: CardStorageProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleAddFolder();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setIsAdding(false);
-      setNewFolderName('');
+      setNewFolderName("");
     }
   };
 
