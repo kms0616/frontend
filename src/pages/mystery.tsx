@@ -119,7 +119,7 @@ export default function MysteryPage() {
 
       const data: MysterySelectResponse = await response.json();
 
-      navigate(`/received/${data.receivedCard.collectionCardId}`);
+      navigate(`/received/${data.exchangeId}`);
     } catch (error) {
       console.error(error);
     } finally {
