@@ -79,8 +79,7 @@ export default function CardStorage({onFolderClick}: CardStorageProps) {
 
               <div className="relative z-10 flex flex-col items-center justify-center gap-[16px]">
                 <div className="mb-[40px] w-[73px] h-[1px] bg-black" />
-                <div className="flex items-center justify-center w-fit px-[10px] py-[4px] border border-black bg-transparent rounded-[4px]">
-                  <span className="text-[12px] font-[600] text-black tracking-tight whitespace-nowrap leading-none">{folder.name}</span>
+<div className={`flex items-center justify-center w-fit px-[10px] py-[4px] border border-black rounded-[4px] ${folder.bgColor}`}>                  <span className="text-[12px] font-[600] text-black tracking-tight whitespace-nowrap leading-none">{folder.name}</span>
                 </div>
                 <div className="mt-[40px] w-[73px] h-[1px] bg-black" />
               </div>

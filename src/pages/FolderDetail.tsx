@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import CardDetail from './CardDetail';
 
 export default function FolderDetail() {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+
+  const [isCardOpen, setIsCardOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<any>(null);
 
   const tags = [
     { id: "cooling", label: "냉각력", borderColor: "border-[#0DBAEE]", bgColor: 'bg-[#E5F7FE]' },
@@ -54,7 +58,13 @@ export default function FolderDetail() {
     setActiveFilter(prev => prev === tagId ? null : tagId);
   };
 
+  const handleCardClick = (card: any) => {
+    setSelectedCard(card);
+    setIsCardOpen(true);
+  };
+
   return (
+    <>
     <main className="mx-auto w-[393px] h-[881px] bg-[#FBFBFB] rounded-[48px] overflow-y-auto font-['Pretendard'] relative shadow-lg">
       <header className='flex items-center w-full px-[20px] py-[8px] mt-[54px] mb-[24px]'>
         <button className="mr-auto">
@@ -94,6 +104,7 @@ export default function FolderDetail() {
           filteredCards.map((card) => (
             <div 
               key={card.id} 
+              onClick={() => handleCardClick(card)}
               className={`w-full h-[116px] rounded-[16px] border border-black px-[31px] py-[10px] relative overflow-hidden ${card.cardBg} cursor-pointer hover:opacity-90 transition-opacity`}
             >
               <div className={`absolute left-0 top-0 bottom-0 w-[12px] border-r border-black ${card.accentColor}`} />
@@ -117,7 +128,14 @@ export default function FolderDetail() {
           </div>
         )}
       </section>
-
     </main>
+    <CardDetail
+    isOpen={isCardOpen}
+    onClose={() => setIsCardOpen(false)}
+    cardData={selectedCard}
+    />
+
+    </>
+   
   );
 }
