@@ -1,58 +1,134 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import FolderSelect from "../components/FolderSelect";
 
-const receivedCards = [
+type Effect = {
+  effectTypeId: number;
+  name: string;
+  level: number;
+};
+
+type CardExchangeResponse = {
+  exchangeId: number;
+  exchangedAt: string;
+  sentCard: {
+    cardId: number;
+    title: string;
+    imageUrl: string;
+  };
+  receivedCard: {
+    collectionCardId: number;
+    cardId: number;
+    title: string;
+    description: string;
+    recommendedSituation: string;
+    difficulty: number;
+    imageUrl: string;
+    message: string;
+    authorUserId: number;
+    authorNickname: string;
+    primaryEffect: {
+      effectTypeId: number;
+      name: string;
+      color: string;
+      icon: string;
+    };
+    effects: Effect[];
+    createdAt: string;
+  };
+};
+
+const effectAssetMap: Record<
+  number,
   {
-    id: 1,
-    senderNickname: "반쯤 녹은 우산",
-    message: "쉽게 여름을 이겨낼 수 있는 방법이에요",
-    title: "아이스 아메리카노 방어술",
-    description: "손에 차가운 걸 쥐면 오늘이 조금 쉬워진다.",
-    recommendedSituation: "출근길",
-    createdAt: "2026.07.01",
-    difficulty: 2,
-    effects: [
-      {
-        name: "냉각력",
-        level: 3,
-        color: "#E5F7FE",
-        text: "#4759A6",
-        icon: "/images/cold.svg",
-        frame: "/images/cards/cold-frame.svg",
-      },
-      {
-        name: "자본력",
-        level: 5,
-        color: "#FFF5DE",
-        text: "#FFA300",
-        icon: "/images/money.svg",
-        frame: "/images/cards/money-frame.svg",
-      },
-      {
-        name: "인내력",
-        level: 3,
-        color: "#FFD0D0",
-        text: "#FF3333",
-        icon: "/images/fire.svg",
-        frame: "/images/cards/fire-frame.svg",
-      },
-    ],
+    color: string;
+    text: string;
+    icon: string;
+    frame: string;
+  }
+> = {
+  1: {
+    color: "#E5F7FE",
+    text: "#4759A6",
+    icon: "/images/cold.svg",
+    frame: "/images/cards/cold-frame.svg",
   },
-];
+  2: {
+    color: "#F3EDFD",
+    text: "#A27DDB",
+    icon: "/images/brain.svg",
+    frame: "/images/cards/cold-frame.svg",
+  },
+  3: {
+    color: "#E4FAED",
+    text: "#00C772",
+    icon: "/images/power.svg",
+    frame: "/images/cards/cold-frame.svg",
+  },
+  4: {
+    color: "#FFF5DE",
+    text: "#FFA300",
+    icon: "/images/money.svg",
+    frame: "/images/cards/money-frame.svg",
+  },
+  5: {
+    color: "#FFD0D0",
+    text: "#FF3333",
+    icon: "/images/fire.svg",
+    frame: "/images/cards/fire-frame.svg",
+  },
+};
 
 export default function ReceivedCardPage() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: exchangeId } = useParams();
+
+  const [exchange, setExchange] = useState<CardExchangeResponse | null>(null);
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
 
-  const card = receivedCards.find((card) => card.id === Number(id));
+  useEffect(() => {
+    if (!exchangeId) return;
 
-  if (!card) return null;
+    const fetchExchange = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
 
-  const mainEffect = card.effects.reduce((max, effect) =>
-    effect.level > max.level ? effect : max,
-  );
+        const response = await fetch(`/api/card-exchange/${exchangeId}`, {
+          method: "GET",
+          headers: {
+            "X-USER-ID": userId ?? "",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("교환 결과 조회 실패");
+        }
+
+        const data: CardExchangeResponse = await response.json();
+        setExchange(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchExchange();
+  }, [exchangeId]);
+
+  if (!exchange) return null;
+
+  const card = exchange.receivedCard;
+
+  const mainEffect =
+    card.effects.find(
+      (effect) => effect.effectTypeId === card.primaryEffect.effectTypeId,
+    ) ?? card.effects[0];
+
+  const mainEffectAsset = effectAssetMap[mainEffect.effectTypeId] ?? {
+    color: "#E5F7FE",
+    text: "#4759A6",
+    icon: card.primaryEffect.icon,
+    frame: "/images/cards/cold-frame.svg",
+  };
 
   return (
     <main className="relative mx-auto h-[852px] w-[393px] rounded-[48px] bg-[#FBFBFB]">
@@ -83,8 +159,9 @@ export default function ReceivedCardPage() {
                 alt=""
                 className="h-[20px] w-[20px]"
               />
+
               <p className="font-['Pretendard'] text-[14px] font-semibold text-black">
-                {card.senderNickname}님의 메시지
+                {card.authorNickname}님의 메시지
               </p>
             </div>
 
@@ -93,19 +170,16 @@ export default function ReceivedCardPage() {
             </p>
           </div>
 
-          {/* 카드 */}
           <div className="relative mt-[24px] h-[600px] w-[353px] overflow-visible rounded-[12px]">
-            {/* 효과 중 가장 큰 효과의 프레임 */}
             <img
-              src={mainEffect.frame}
+              src={mainEffectAsset.frame}
               alt=""
               className="absolute left-[-1px] top-[-5px] h-[610px] w-[363px] max-w-none"
             />
 
-            {/* 카드 위에 올라가는 실제 내용 */}
             <div className="absolute inset-0 px-[37px] pt-[52px] text-center">
               <img
-                src={mainEffect.icon}
+                src={mainEffectAsset.icon}
                 alt=""
                 className="mx-auto h-[92px] w-[92px]"
               />
@@ -119,8 +193,8 @@ export default function ReceivedCardPage() {
               </p>
 
               <div className="mt-[24px] flex justify-between font-['Pretendard'] text-[12px] text-[#9B9B9B]">
-                <span>{card.senderNickname}</span>
-                <span>{card.createdAt}</span>
+                <span>{card.authorNickname}</span>
+                <span>{new Date(card.createdAt).toLocaleDateString()}</span>
               </div>
 
               <div className="mt-[18px] flex items-center py-[6px]">
@@ -146,30 +220,39 @@ export default function ReceivedCardPage() {
                 </span>
 
                 <div className="mt-[8px] flex flex-wrap gap-[12px]">
-                  {card.effects.map((effect) => (
-                    <div
-                      key={effect.name}
-                      className="flex items-center gap-[4px] rounded-full px-[12px] py-[4px]"
-                      style={{ backgroundColor: effect.color }}
-                    >
-                      <img
-                        src={effect.icon}
-                        alt=""
-                        className="h-[14px] w-[14px]"
-                      />
+                  {card.effects.map((effect) => {
+                    const asset = effectAssetMap[effect.effectTypeId] ?? {
+                      color: "#E5F7FE",
+                      text: "#4759A6",
+                      icon: card.primaryEffect.icon,
+                      frame: "/images/cards/cold-frame.svg",
+                    };
 
-                      <span
-                        className="font-['Pretendard'] text-[12px] font-semibold"
-                        style={{ color: effect.text }}
+                    return (
+                      <div
+                        key={effect.effectTypeId}
+                        className="flex items-center gap-[4px] rounded-full px-[12px] py-[4px]"
+                        style={{ backgroundColor: asset.color }}
                       >
-                        {effect.name} {effect.level}
-                      </span>
-                    </div>
-                  ))}
+                        <img
+                          src={asset.icon}
+                          alt=""
+                          className="h-[14px] w-[14px]"
+                        />
+
+                        <span
+                          className="font-['Pretendard'] text-[12px] font-semibold"
+                          style={{ color: asset.text }}
+                        >
+                          {effect.name} {effect.level}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="mt-[14px] flex items-center ">
+              <div className="mt-[14px] flex items-center">
                 <span className="font-['Pretendard'] text-[12px] font-semibold text-[#777777]">
                   난이도
                 </span>

@@ -1,42 +1,134 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-//import CardItem from "../components/CardItem";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-type Effect = {
-  name: string;
-  level: number;
-  frame: string;
-  icon: string;
+type MysteryOption = {
+  optionId: number;
+  position: number;
+  cardBackColor: string;
+  primaryEffect: {
+    effectTypeId: number;
+    name: string;
+    color: string;
+    icon: string;
+  };
+  selectable: boolean;
 };
 
-const mysteryCards = [
-  {
-    id: 1,
-    coverImage: "/images/mystery/blue.svg",
-    title: "아이스 아메리카노 방어술",
-    description: "항상 차가운 걸 쥐고 있어야 오늘을 시작할 수 있다",
-    difficulty: 2,
-    effects: [
-      {
-        name: "냉각력",
-        level: 3,
-        frame: "/images/cards/cold-frame.svg",
-        icon: "/images/cold.svg",
-      },
-      {
-        name: "자본력",
-        level: 5,
-        frame: "/images/cards/money-frame.svg",
-        icon: "/images/money.svg",
-      },
-    ],
-  },
-];
+type MysteryDraw = {
+  mysteryDrawId: number;
+  status: string;
+  options: MysteryOption[];
+};
+
+type MysterySelectResponse = {
+  exchangeId: number;
+  receivedCard: {
+    collectionCardId: number;
+    cardId: number;
+    title: string;
+    description: string;
+    recommendedSituation: string;
+    difficulty: number;
+    imageUrl: string;
+    message: string;
+    authorUserId: number;
+    authorNickname: string;
+    primaryEffect: {
+      effectTypeId: number;
+      name: string;
+      color: string;
+      icon: string;
+    };
+    effects: {
+      effectTypeId: number;
+      name: string;
+      level: number;
+    }[];
+    createdAt: string;
+  };
+};
 
 export default function MysteryPage() {
   const navigate = useNavigate();
-  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const { mysteryDrawId } = useParams();
+  console.log("mysteryDrawId:", mysteryDrawId);
+  console.log("userId:", localStorage.getItem("userId"));
+  const [mysteryDraw, setMysteryDraw] = useState<MysteryDraw | null>(null);
+  const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  useEffect(() => {
+    if (!mysteryDrawId) return;
+
+    const fetchMysteryDraw = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+
+        const response = await fetch(`/api/mystery-draws/${mysteryDrawId}`, {
+          method: "GET",
+          headers: {
+            "X-USER-ID": userId ?? "",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("미스터리 뽑기 조회 실패");
+        }
+
+        const data: MysteryDraw = await response.json();
+        setMysteryDraw(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchMysteryDraw();
+  }, [mysteryDrawId]);
+
+  const handleOptionClick = async (option: MysteryOption) => {
+    if (!mysteryDrawId || isSelecting) return;
+
+    if (selectedOptionId !== option.optionId) {
+      setSelectedOptionId(option.optionId);
+      return;
+    }
+
+    try {
+      setIsSelecting(true);
+
+      const userId = localStorage.getItem("userId");
+
+      const response = await fetch(
+        `/api/mystery-draws/${mysteryDrawId}/select`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-USER-ID": userId ?? "",
+          },
+          body: JSON.stringify({
+            optionId: option.optionId,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("미스터리 카드 선택 실패");
+      }
+
+      const data: MysterySelectResponse = await response.json();
+
+      navigate(`/received/${data.exchangeId}`);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSelecting(false);
+    }
+  };
+
+  if (!mysteryDraw) return null;
+
   return (
     <main className="relative mx-auto h-[852px] w-[393px] rounded-[48px] bg-[#FBFBFB]">
       <section className="h-full w-full">
@@ -68,35 +160,30 @@ export default function MysteryPage() {
           </p>
 
           <div className="mt-[36px] grid grid-cols-2 gap-x-[20.33px] gap-y-[26.4px] px-[20px]">
-            {mysteryCards.map((card) => {
-              const isOpened = selectedCardId === card.id;
+            {mysteryDraw.options.map((option) => {
+              const isOpened = selectedOptionId === option.optionId;
 
               return (
                 <button
-                  key={card.id}
+                  key={option.optionId}
                   type="button"
-                  onClick={() => {
-                    if (isOpened) {
-                      navigate(`/received/${card.id}`);
-                    } else {
-                      setSelectedCardId(card.id);
-                    }
-                  }}
-                  className="flex h-[276px] w-[166px] items-center justify-center overflow-hidden rounded-[12px]"
+                  disabled={!option.selectable || isSelecting}
+                  onClick={() => handleOptionClick(option)}
+                  className="flex h-[276px] w-[166px] items-center justify-center overflow-hidden rounded-[12px] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isOpened ? (
-                    <OpenedMysteryCard
-                      title={card.title}
-                      description={card.description}
-                      difficulty={card.difficulty}
-                      effects={card.effects}
-                    />
+                    <OpenedMysteryOption option={option} />
                   ) : (
-                    <img
-                      src={card.coverImage}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+                    <div
+                      className="flex h-full w-full items-center justify-center rounded-[12px]"
+                      style={{ backgroundColor: option.cardBackColor }}
+                    >
+                      <img
+                        src="/images/mystery/blue.svg"
+                        alt="미스터리 카드"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                   )}
                 </button>
               );
@@ -104,9 +191,10 @@ export default function MysteryPage() {
           </div>
         </div>
       </section>
+
       {isExitModalOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[48px] bg-black/30">
-          <div className="w-[352px] h-[238px] rounded-[24px] bg-white px-[24px] pt-[38px] pb-[22px]">
+          <div className="h-[238px] w-[352px] rounded-[24px] bg-white px-[24px] pt-[38px] pb-[22px]">
             <h2 className="text-center font-['Pretendard'] text-[24px] font-bold text-[#222]">
               정말 뒤로 가시겠어요?
             </h2>
@@ -141,58 +229,24 @@ export default function MysteryPage() {
   );
 }
 
-function OpenedMysteryCard({
-  title,
-  description,
-  difficulty,
-  effects,
-}: {
-  title: string;
-  description: string;
-  difficulty: number;
-  effects: Effect[];
-}) {
-  const mainEffect =
-    effects.length > 0
-      ? effects.reduce((max, effect) =>
-          effect.level > max.level ? effect : max,
-        )
-      : null;
-
-  if (!mainEffect) return null;
-
+function OpenedMysteryOption({ option }: { option: MysteryOption }) {
   return (
-    <div className="relative h-[276px] w-[166px] overflow-hidden rounded-[12px]">
+    <div
+      className="relative flex h-[276px] w-[166px] flex-col items-center justify-center overflow-hidden rounded-[12px]"
+      style={{ backgroundColor: option.cardBackColor }}
+    >
       <img
-        src={mainEffect.frame}
-        alt=""
-        className="absolute inset-0 h-full w-full object-fill"
+        src={option.primaryEffect.icon}
+        alt={option.primaryEffect.name}
+        className="h-[48px] w-[48px]"
       />
 
-      <h3 className="absolute top-[112px] left-1/2 w-[130px] -translate-x-1/2 text-center font-['KIMM'] text-[10px] font-bold leading-[15px] tracking-[-0.03em] text-black">
-        {title}
-      </h3>
-
-      <p className="absolute top-[132px] left-1/2 w-[120px] -translate-x-1/2 text-center font-['KIMM'] text-[7px] font-bold leading-[10px] tracking-[-0.03em] text-black">
-        {description}
+      <p
+        className="mt-[16px] font-['KIMM'] text-[16px] font-bold"
+        style={{ color: option.primaryEffect.color }}
+      >
+        {option.primaryEffect.name}
       </p>
-
-      <div className="absolute top-[178px] left-1/2 flex -translate-x-1/2 flex-col items-center">
-        <span className="font-['Pretendard'] text-[8px] font-semibold text-[#777777]">
-          난이도
-        </span>
-
-        <div className="mt-[4px] flex gap-[2px]">
-          {Array.from({ length: difficulty }).map((_, index) => (
-            <img
-              key={index}
-              src="/images/star.svg"
-              alt="별"
-              className="h-[8px] w-[8px]"
-            />
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
