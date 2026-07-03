@@ -66,8 +66,8 @@ const FolderSelect: React.FC<FolderSelectProps> = ({
     if (pendingNewFolderName) {
       onSelect(null, pendingNewFolderName);
     } else {
-      // selectedFolderId가 null이면 "전체" = 폴더 없이 저장 → folderId 0
-      onSelect(selectedFolderId ?? 0);
+      // selectedFolderId가 null이면 "전체" = 폴더 지정 없이 저장
+      onSelect(selectedFolderId);
     }
   };
 

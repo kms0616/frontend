@@ -39,9 +39,9 @@ export interface CreateSurvivalCardRequest {
     displayOrder: number;
   }[];
   favorite: boolean;
-  folderId: number;
-  newFolderName: string;
-  newFolderColor: string;
+  folderId: number | null;
+  newFolderName: string | null;
+  newFolderColor: string | null;
 }
 
 // 카드 저장 응답

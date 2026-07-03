@@ -38,9 +38,9 @@ const CardPreview: React.FC<CardPreviewProps> = ({ isOpen, onClose, cardData, on
         imageKey: "",
         effects: cardData.effects,
         favorite: false,
-        folderId: folderId ?? 0,
-        newFolderName: newFolderName ?? "",
-        newFolderColor: newFolderName ? "#B4D9A7" : "",
+        folderId,
+        newFolderName: newFolderName ?? null,
+        newFolderColor: newFolderName ? "#B4D9A7" : null,
       });
 
       setIsFolderSelectOpen(false);
