@@ -3,7 +3,7 @@
 
 @font-face {
   font-family: "KIMM";
-  src: url("/fonts/KIMM_Bold.ttf") format("truetype");
+  src: url("/fonts/KIMM_bold.ttf") format("truetype");
   font-weight: 700;
 }
 
@@ -22,4 +22,12 @@ body,
 #root {
   margin: 0;
   min-height: 100%;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE, Edge */
+  scrollbar-width: none; /* Firefox */
 }
