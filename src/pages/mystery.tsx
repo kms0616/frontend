@@ -2,6 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 //import CardItem from "../components/CardItem";
 
+type Effect = {
+  name: string;
+  level: number;
+  frame: string;
+  icon: string;
+};
+
 const mysteryCards = [
   {
     id: 1,
@@ -9,44 +16,33 @@ const mysteryCards = [
     title: "아이스 아메리카노 방어술",
     description: "항상 차가운 걸 쥐고 있어야 오늘을 시작할 수 있다",
     difficulty: 2,
-    image: "/images/card-sample.png",
-  },
-  {
-    id: 2,
-    coverImage: "/images/mystery/yellow.svg",
-    title: "선풍기 사수법",
-    description: "바람이 오는 자리를 먼저 차지해야 살아남는다",
-    difficulty: 3,
-    image: "/images/card-sample.png",
-  },
-  {
-    id: 3,
-    coverImage: "/images/mystery/pink.svg",
-    title: "얼음물 샤워법",
-    description: "더우면 시원한 물로 정신을 깨워보자",
-    difficulty: 1,
-    image: "/images/card-sample.png",
-  },
-  {
-    id: 4,
-    coverImage: "/images/mystery/white.svg",
-    title: "그늘 찾기",
-    description: "직사광선을 피해 잠시 쉬어가는 것도 방법이다",
-    difficulty: 2,
-    image: "/images/card-sample.png",
+    effects: [
+      {
+        name: "냉각력",
+        level: 3,
+        frame: "/images/cards/cold-frame.svg",
+        icon: "/images/cold.svg",
+      },
+      {
+        name: "자본력",
+        level: 5,
+        frame: "/images/cards/money-frame.svg",
+        icon: "/images/money.svg",
+      },
+    ],
   },
 ];
 
 export default function MysteryPage() {
   const navigate = useNavigate();
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
-
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   return (
     <main className="relative mx-auto h-[852px] w-[393px] rounded-[48px] bg-[#FBFBFB]">
       <section className="h-full w-full">
         <header className="mt-[54px] flex h-[40px] w-[393px] items-center">
           <button
-            onClick={() => navigate("/main")}
+            onClick={() => setIsExitModalOpen(true)}
             type="button"
             className="ml-[30px] h-[24px] w-[24px] cursor-pointer"
           >
@@ -79,7 +75,13 @@ export default function MysteryPage() {
                 <button
                   key={card.id}
                   type="button"
-                  onClick={() => setSelectedCardId(card.id)}
+                  onClick={() => {
+                    if (isOpened) {
+                      navigate(`/received/${card.id}`);
+                    } else {
+                      setSelectedCardId(card.id);
+                    }
+                  }}
                   className="flex h-[276px] w-[166px] items-center justify-center overflow-hidden rounded-[12px]"
                 >
                   {isOpened ? (
@@ -87,7 +89,7 @@ export default function MysteryPage() {
                       title={card.title}
                       description={card.description}
                       difficulty={card.difficulty}
-                      image={card.image}
+                      effects={card.effects}
                     />
                   ) : (
                     <img
@@ -102,50 +104,93 @@ export default function MysteryPage() {
           </div>
         </div>
       </section>
+      {isExitModalOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[48px] bg-black/30">
+          <div className="w-[352px] h-[238px] rounded-[24px] bg-white px-[24px] pt-[38px] pb-[22px]">
+            <h2 className="text-center font-['Pretendard'] text-[24px] font-bold text-[#222]">
+              정말 뒤로 가시겠어요?
+            </h2>
+
+            <p className="mt-[14px] text-center font-['Pretendard'] text-[16px] font-bold leading-[24px] text-black">
+              화면을 나가면
+              <br />
+              누군가의 카드를 받을 수 없어요
+            </p>
+
+            <div className="mt-[28px] flex justify-between">
+              <button
+                type="button"
+                onClick={() => navigate("/send")}
+                className="h-[56px] w-[148px] rounded-[16px] bg-[#D0D0D0] font-['Pretendard'] text-[18px] font-semibold text-white"
+              >
+                확인
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsExitModalOpen(false)}
+                className="h-[56px] w-[148px] rounded-[16px] bg-[#4759A6] font-['Pretendard'] text-[18px] font-semibold text-white"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
+
 function OpenedMysteryCard({
   title,
   description,
   difficulty,
-  image,
+  effects,
 }: {
   title: string;
   description: string;
   difficulty: number;
-  image: string;
+  effects: Effect[];
 }) {
+  const mainEffect =
+    effects.length > 0
+      ? effects.reduce((max, effect) =>
+          effect.level > max.level ? effect : max,
+        )
+      : null;
+
+  if (!mainEffect) return null;
+
   return (
-    <div className="h-[276px] w-[166px] overflow-hidden rounded-[12px] border-2 border-black bg-[#8DBBFA]">
-      <div className="m-[13px] h-[250px] bg-white">
-        <div className="h-[95px] w-full">
-          <img src={image} alt="" className="h-full w-full object-cover" />
-        </div>
+    <div className="relative h-[276px] w-[166px] overflow-hidden rounded-[12px]">
+      <img
+        src={mainEffect.frame}
+        alt=""
+        className="absolute inset-0 h-full w-full object-fill"
+      />
 
-        <div className="border-t-2 border-black px-[10px] pt-[14px] text-center">
-          <h3 className="font-['KIMM'] text-[10px] font-bold tracking-[-0.03em] text-black">
-            {title}
-          </h3>
+      <h3 className="absolute top-[112px] left-1/2 w-[130px] -translate-x-1/2 text-center font-['KIMM'] text-[10px] font-bold leading-[15px] tracking-[-0.03em] text-black">
+        {title}
+      </h3>
 
-          <p className="mt-[8px] font-['KIMM'] text-[7px] font-bold leading-[10px] tracking-[-0.03em] text-black">
-            {description}
-          </p>
+      <p className="absolute top-[132px] left-1/2 w-[120px] -translate-x-1/2 text-center font-['KIMM'] text-[7px] font-bold leading-[10px] tracking-[-0.03em] text-black">
+        {description}
+      </p>
 
-          <p className="mt-[8px] font-['Pretendard'] text-[8px] font-semibold text-[#777777]">
-            난이도
-          </p>
+      <div className="absolute top-[178px] left-1/2 flex -translate-x-1/2 flex-col items-center">
+        <span className="font-['Pretendard'] text-[8px] font-semibold text-[#777777]">
+          난이도
+        </span>
 
-          <div className="mt-[4px] flex justify-center gap-[2px]">
-            {Array.from({ length: difficulty }).map((_, index) => (
-              <img
-                key={index}
-                src="/images/star.svg"
-                alt="별"
-                className="h-[8px] w-[8px]"
-              />
-            ))}
-          </div>
+        <div className="mt-[4px] flex gap-[2px]">
+          {Array.from({ length: difficulty }).map((_, index) => (
+            <img
+              key={index}
+              src="/images/star.svg"
+              alt="별"
+              className="h-[8px] w-[8px]"
+            />
+          ))}
         </div>
       </div>
     </div>

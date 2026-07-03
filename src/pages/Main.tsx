@@ -32,7 +32,7 @@ export default function HomePage() {
       <section className="px-[20px] py-[32px]">
         <div>
           <h2 className="mb-[44px] text-[24px] font-bold leading-[34px] text-black">
-            <span className="bg-[#D9F3DD]">{userName}</span>님의
+            <span className="bg-[#D9F3DD]">{userName}님</span>의
             <br />
             여름 생존 우편
           </h2>
@@ -126,5 +126,5 @@ function CountBox({
 }
 
 function Divider() {
-  return <div className="h-[86px] w-[2px] bg-black" />;
+  return <div className="h-[70px] w-[2px] bg-black" />;
 }

@@ -11,6 +11,26 @@ const cards = [
     description: "항상 차가운 걸 쥐고 있어야 오늘을 시작할 수 있다",
     difficulty: 3,
     image: "/images/card-sample.png",
+    effects: [
+      {
+        name: "냉각력",
+        level: 3,
+        frame: "/images/cards/cold-frame.svg",
+        icon: "/images/cold.svg",
+      },
+      {
+        name: "자본력",
+        level: 5,
+        frame: "/images/cards/money-frame.svg",
+        icon: "/images/money.svg",
+      },
+      {
+        name: "인내력",
+        level: 2,
+        frame: "/images/cards/fire-frame.svg",
+        icon: "/images/fire.svg",
+      },
+    ],
   },
   {
     id: 2,
@@ -18,6 +38,20 @@ const cards = [
     description: "바람이 오는 자리를 먼저 차지해야 살아남는다",
     difficulty: 2,
     image: "/images/card-sample.png",
+    effects: [
+      {
+        name: "냉각력",
+        level: 4,
+        frame: "/images/cards/cold-frame.svg",
+        icon: "/images/cold.svg",
+      },
+      {
+        name: "인내력",
+        level: 3,
+        frame: "/images/cards/fire-frame.svg",
+        icon: "/images/fire.svg",
+      },
+    ],
   },
 ];
 
@@ -73,7 +107,7 @@ export default function CardSendPage() {
                   title={card.title}
                   description={card.description}
                   difficulty={card.difficulty}
-                  image={card.image}
+                  effects={card.effects}
                 />
               ))}
             </div>
