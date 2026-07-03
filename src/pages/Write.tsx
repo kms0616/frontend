@@ -5,6 +5,10 @@ import powerIconn from "../assets/power.svg";
 import capitalIcon from "../assets/capital.svg";
 import patienceIcon from "../assets/patience.svg";
 
+interface SurvivalCreatePageProps {
+  onOpenPreview: (data: any) => void;
+}
+
 const EFFECT_OPTIONS = [
   { id: "cooling", label: "냉각력", activeColor: "border-[#00B8ED] bg-[#E5F7FE]", iconColor: "bg-[#00B8ED]", textColor: "text-[#00B8ED]", icon: snowIcon },
   { id: "mental", label: "정신력", activeColor: "border-[#A27DDB] bg-[#F3EDFD]", iconColor: "bg-[#A27DDB]", textColor: "text-[#A27DDB]", icon: brainIcon },
@@ -13,7 +17,8 @@ const EFFECT_OPTIONS = [
   { id: "endurance", label: "인내력", activeColor: "border-[#FC504C] bg-[#FEE]", iconColor: "bg-[#FC504C]", textColor: "text-[#FC504C]", icon: patienceIcon },
 ];
 
-export default function SurvivalCreatePage() {
+
+export default function SurvivalCreatePage({ onOpenPreview }: SurvivalCreatePageProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [situation, setSituation] = useState("");
@@ -46,6 +51,16 @@ export default function SurvivalCreatePage() {
       ...prev,
       [id]: { ...prev[id], level },
     }));
+  };
+
+  const handleOpenPreview = () => {
+    onOpenPreview({
+      title: name,
+      description: description,
+      situation: situation,
+      effects: effects,
+      difficulty: difficulty,
+    });
   };
 
   return (
@@ -183,7 +198,8 @@ export default function SurvivalCreatePage() {
           </div>
         </div>
 
-        <button className="mx-auto mt-[32px] block w-[349px] rounded-[16px] bg-[#4759A6] text-white text-[20px] font-[600] py-[14px]">
+        <button onClick={handleOpenPreview}
+        className="mx-auto mt-[32px] block w-[349px] rounded-[16px] bg-[#4759A6] text-white text-[20px] font-[600] py-[14px]">
         카드 확인하기
         </button>
       </section>
