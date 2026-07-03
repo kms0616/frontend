@@ -20,7 +20,7 @@ export default function ReceivedCardPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return null; // 필요하면 로딩 스피너로 교체
+  if (loading) return null;
   if (error || !card) return null;
 
   return (
