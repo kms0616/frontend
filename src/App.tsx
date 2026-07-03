@@ -4,6 +4,8 @@ import LoginPage from "./pages/Login";
 import SendPage from "./pages/Send";
 import MysteryPage from "./pages/mystery";
 import ReceivedCardPage from "./pages/ReceivedCard";
+import WritePage from "./pages/Write";
+import StoragePage from "./pages/CardStorage";
 
 function App() {
   return (
@@ -11,8 +13,10 @@ function App() {
       <Route path="/" element={<LoginPage />} />
       <Route path="/main" element={<MainPage />} />
       <Route path="/send" element={<SendPage />} />
-      <Route path="/mystery" element={<MysteryPage />} />
+      <Route path="/mystery/:mysteryDrawId" element={<MysteryPage />} />
       <Route path="/received/:id" element={<ReceivedCardPage />} />
+      <Route path="/write" element={<WritePage />} />
+      <Route path="/storage" element={<StoragePage />} />
     </Routes>
   );
 }

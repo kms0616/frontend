@@ -27,12 +27,10 @@ export default function ReceivedCardPage() {
     setSaveError(null);
 
     try {
-      // "전체" 선택(folderId, newFolderName 둘 다 없음)이면 폴더 지정 없이 저장
-      // 새 폴더면 newFolderName으로, 기존 폴더면 folderId로 분기
       const targetFolderId = folderId ?? 0;
 
       await addCardToFolder(targetFolderId, {
-        collectionCardId: Number(id), // 라우터 :id = collectionCardId
+        collectionCardId: Number(id),
       });
 
       setIsFolderModalOpen(false);
