@@ -113,7 +113,9 @@ export default function ReceivedCardPage() {
       setIsFolderModalOpen(false);
       navigate("/main");
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "저장 중 오류가 발생했습니다");
+      setSaveError(
+        err instanceof Error ? err.message : "저장 중 오류가 발생했습니다",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -246,12 +248,6 @@ export default function ReceivedCardPage() {
                         className="flex items-center gap-[4px] rounded-full px-[12px] py-[4px]"
                         style={{ backgroundColor: asset.color }}
                       >
-                        <img
-                          src={asset.icon}
-                          alt=""
-                          className="h-[14px] w-[14px]"
-                        />
-
                         <span
                           className="font-['Pretendard'] text-[12px] font-semibold"
                           style={{ color: asset.text }}
