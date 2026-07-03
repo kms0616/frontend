@@ -1,76 +1,129 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CardItem from "../components/CardItem";
 
 type SendStatus = "idle" | "sending" | "success" | "error";
 
-const cards = [
+type SurvivalCard = {
+  cardId: number;
+  title: string;
+  description: string;
+  recommendedSituation: string;
+  difficulty: number;
+  imageUrl: string;
+  status: "UNSENT" | "SENT" | "DELETED";
+  primaryEffect: {
+    effectTypeId: number;
+    name: string;
+    color: string;
+    icon: string;
+  };
+  effects: {
+    effectTypeId: number;
+    name: string;
+    level: number;
+  }[];
+  createdAt: string;
+};
+
+type CardMailingResponse = {
+  mailingId: number;
+  cardId: number;
+  status: string;
+  mysteryDrawId: number;
+};
+
+const effectAssetMap: Record<
+  number,
   {
-    id: 1,
-    title: "아이스 아메리카노 방어술",
-    description: "항상 차가운 걸 쥐고 있어야 오늘을 시작할 수 있다",
-    difficulty: 3,
-    image: "/images/card-sample.png",
-    effects: [
-      {
-        name: "냉각력",
-        level: 3,
-        frame: "/images/cards/cold-frame.svg",
-        icon: "/images/cold.svg",
-      },
-      {
-        name: "자본력",
-        level: 5,
-        frame: "/images/cards/money-frame.svg",
-        icon: "/images/money.svg",
-      },
-      {
-        name: "인내력",
-        level: 2,
-        frame: "/images/cards/fire-frame.svg",
-        icon: "/images/fire.svg",
-      },
-    ],
+    frame: string;
+    icon: string;
+  }
+> = {
+  1: {
+    frame: "/images/cards/cold-frame.svg",
+    icon: "/images/cold.svg",
   },
-  {
-    id: 2,
-    title: "선풍기 사수법",
-    description: "바람이 오는 자리를 먼저 차지해야 살아남는다",
-    difficulty: 2,
-    image: "/images/card-sample.png",
-    effects: [
-      {
-        name: "냉각력",
-        level: 4,
-        frame: "/images/cards/cold-frame.svg",
-        icon: "/images/cold.svg",
-      },
-      {
-        name: "인내력",
-        level: 3,
-        frame: "/images/cards/fire-frame.svg",
-        icon: "/images/fire.svg",
-      },
-    ],
+  2: {
+    frame: "/images/cards/money-frame.svg",
+    icon: "/images/money.svg",
   },
-];
+  3: {
+    frame: "/images/cards/fire-frame.svg",
+    icon: "/images/fire.svg",
+  },
+};
 
 export default function CardSendPage() {
   const navigate = useNavigate();
+
+  const [cards, setCards] = useState<SurvivalCard[]>([]);
   const [message, setMessage] = useState("");
   const [sendStatus, setSendStatus] = useState<SendStatus>("idle");
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const [mysteryDrawId, setMysteryDrawId] = useState<number | null>(null);
 
   const hasCards = cards.length > 0;
-  const canSend = message.trim().length > 0;
+  const canSend = message.trim().length > 0 && selectedCardId !== null;
 
-  const handleSend = () => {
-    if (!canSend) return;
+  useEffect(() => {
+    const fetchMyCards = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
 
-    setSendStatus("sending");
+        const response = await fetch("/api/survival-cards/me?status=UNSENT", {
+          method: "GET",
+          headers: {
+            "X-USER-ID": userId ?? "",
+          },
+        });
 
-    setTimeout(() => {
+        if (!response.ok) {
+          throw new Error("내 카드 목록 조회 실패");
+        }
+
+        const data: SurvivalCard[] = await response.json();
+        setCards(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchMyCards();
+  }, []);
+
+  const handleSend = async () => {
+    if (!canSend || selectedCardId === null) return;
+
+    try {
+      setSendStatus("sending");
+
+      const userId = localStorage.getItem("userId");
+
+      const response = await fetch("/api/card-mailings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-USER-ID": userId ?? "",
+        },
+        body: JSON.stringify({
+          cardId: selectedCardId,
+          message,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("카드 발송 실패");
+      }
+
+      const data: CardMailingResponse = await response.json();
+
+      setMysteryDrawId(data.mysteryDrawId);
       setSendStatus("success");
-    }, 1200);
+    } catch (error) {
+      console.error(error);
+      setSendStatus("error");
+    }
   };
 
   return (
@@ -101,15 +154,36 @@ export default function CardSendPage() {
             </h2>
 
             <div className="mt-[24px] flex gap-[16.37px] overflow-x-auto pl-[20px] hide-scrollbar">
-              {cards.map((card) => (
-                <CardItem
-                  key={card.id}
-                  title={card.title}
-                  description={card.description}
-                  difficulty={card.difficulty}
-                  effects={card.effects}
-                />
-              ))}
+              {cards.map((card) => {
+                const isSelected = selectedCardId === card.cardId;
+
+                return (
+                  <button
+                    key={card.cardId}
+                    type="button"
+                    onClick={() => setSelectedCardId(card.cardId)}
+                    className={`rounded-[16px] ${
+                      isSelected ? "ring-4 ring-[#4759A6]" : ""
+                    }`}
+                  >
+                    <CardItem
+                      title={card.title}
+                      description={card.description}
+                      difficulty={card.difficulty}
+                      effects={card.effects.map((effect) => {
+                        const asset = effectAssetMap[effect.effectTypeId];
+
+                        return {
+                          name: effect.name,
+                          level: effect.level,
+                          frame: asset?.frame ?? "/images/cards/cold-frame.svg",
+                          icon: asset?.icon ?? "/images/cold.svg",
+                        };
+                      })}
+                    />
+                  </button>
+                );
+              })}
             </div>
 
             <div className="mt-[48px] px-[20px]">
@@ -127,9 +201,9 @@ export default function CardSendPage() {
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={!canSend}
+                disabled={!canSend || sendStatus === "sending"}
                 className={`mt-[72px] h-[58px] w-[353px] rounded-[16px] font-['Pretendard'] text-[20px] font-semibold text-white ${
-                  canSend
+                  canSend && sendStatus !== "sending"
                     ? "cursor-pointer bg-[#4759A6]"
                     : "cursor-not-allowed bg-[#D0D0D0]"
                 }`}
@@ -147,7 +221,10 @@ export default function CardSendPage() {
         <SendModal
           status={sendStatus}
           onClose={() => setSendStatus("idle")}
-          onSuccessConfirm={() => navigate("/mystery")}
+          onSuccessConfirm={() => {
+            if (mysteryDrawId === null) return;
+            navigate(`/mystery/${mysteryDrawId}`);
+          }}
         />
       )}
     </main>
@@ -224,7 +301,7 @@ function SendModal({
 
         <button
           type="button"
-          onClick={status === "success" ? onSuccessConfirm : onClose}
+          onClick={isSuccess ? onSuccessConfirm : onClose}
           className="mt-[32px] flex h-[56px] w-[304px] items-center justify-center rounded-[16px] bg-[#4759A6] font-['Pretendard'] text-[20px] font-semibold leading-[30px] text-white"
         >
           확인

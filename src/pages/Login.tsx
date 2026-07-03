@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-const existingNames = ["반쯤 젖은 우산", "김민서", "테스트"];
 
 export default function LoginPage() {
   const [nickname, setNickname] = useState("");
@@ -10,7 +9,11 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const isValidLength = nickname.length >= 2 && nickname.length <= 10;
-
+  type NicknameCheckResponse = {
+    nickname: string;
+    available: boolean;
+    message: string;
+  };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
     setIsChecked(false);
@@ -25,27 +28,62 @@ export default function LoginPage() {
     }
   };
 
-  const handleCheckDuplicate = () => {
+  const handleCheckDuplicate = async () => {
     if (!isValidLength) return;
 
-    const exists = existingNames.includes(nickname);
+    try {
+      const response = await fetch(
+        `/api/users/nickname/check?nickname=${encodeURIComponent(nickname)}`,
+        {
+          method: "GET",
+        },
+      );
 
-    setIsChecked(true);
-    setIsAvailable(!exists);
+      if (!response.ok) {
+        throw new Error("닉네임 중복 확인 실패");
+      }
 
-    if (exists) {
-      setMessage("이미 존재하는 이름입니다.");
-    } else {
-      setMessage("사용 가능한 이름입니다.");
+      const data: NicknameCheckResponse = await response.json();
+
+      setIsChecked(true);
+      setIsAvailable(data.available);
+      setMessage(data.message);
+    } catch (error) {
+      console.error(error);
+      setIsChecked(false);
+      setIsAvailable(false);
+      setMessage("닉네임 중복 확인에 실패했습니다.");
     }
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!isValidLength || !isChecked || !isAvailable) return;
 
-    console.log("시작:", nickname);
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nickname,
+        }),
+      });
 
-    navigate("/main");
+      if (!response.ok) {
+        throw new Error("사용자 생성 실패");
+      }
+
+      const data = await response.json();
+
+      localStorage.setItem("userId", String(data.userId));
+      localStorage.setItem("nickname", data.nickname);
+
+      navigate("/main");
+    } catch (error) {
+      console.error(error);
+      setMessage("사용자 생성에 실패했습니다.");
+    }
   };
 
   return (
@@ -58,7 +96,7 @@ export default function LoginPage() {
         />
 
         <p className="mt-[16px] ml-[36px] h-[52px] w-[281px] text-center text-[16px] font-[700] leading-[26px] text-[#B7B7B7]">
-          나만의 여름 생존법을 카드로 만들고
+          나만의 생존법을 카드로 만들고
           <br />
           누군가의 생존법을 카드로 모아보세요.
         </p>

@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMySurvivalCards } from "../api/survivalCard";
 
-const userName = "반쯤 젖은 우산";
+type HomeInfo = {
+  nickname: string;
+  createdCardCount: number;
+  receivedCardCount: number;
+  sendableCardCount: number;
+};
 
 const menuItems = [
   {
@@ -24,48 +28,55 @@ const menuItems = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-
-  const [counts, setCounts] = useState({
-    made: 0,
-    received: 0, // TODO: "받은 카드" 목록 조회 API 나오면 연결
-    sendable: 0,
-  });
+  const [homeInfo, setHomeInfo] = useState<HomeInfo | null>(null);
 
   useEffect(() => {
-    getMySurvivalCards()
-      .then((all) => {
-        const sendable = all.filter((c) => c.status === "UNSENT").length;
-        setCounts((prev) => ({
-          ...prev,
-          made: all.length,
-          sendable,
-        }));
-      })
-      .catch((err) => {
-        console.error("카드 개수 조회 실패:", err.message);
-      });
+    const fetchHomeInfo = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+
+        const response = await fetch("/api/users/me/home", {
+          headers: {
+            "X-USER-ID": userId ?? "",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("홈 조회 실패");
+        }
+
+        const data: HomeInfo = await response.json();
+        setHomeInfo(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchHomeInfo();
   }, []);
+
+  if (!homeInfo) return null;
 
   return (
     <main className="mx-auto h-[852px] w-[393px] rounded-[48px] bg-[#FBFBFB] font-['Pretendard']">
       <section className="px-[20px] py-[32px]">
         <div>
           <h2 className="mb-[44px] text-[24px] font-bold leading-[34px] text-black">
-            <span className="bg-[#D9F3DD]">{userName}님</span>의
+            <span className="bg-[#D9F3DD]">{homeInfo.nickname}님</span>의
             <br />
-            여름 생존 우편
+            생존 우편
           </h2>
 
           <div className="flex flex-col items-center">
             <button
               type="button"
               onClick={() => navigate(menuItems[0].path)}
-              className="h-[224px] w-[353px] rounded-[24px] cursor-pointer overflow-hidden rounded-[2px]"
+              className="h-[224px] w-[353px] cursor-pointer overflow-hidden rounded-[24px]"
             >
               <img
                 src={menuItems[0].image}
                 alt={menuItems[0].title}
-                className="h-full w-full rounded-[2px] object-cover"
+                className="h-full w-full object-cover"
               />
             </button>
 
@@ -80,7 +91,7 @@ export default function HomePage() {
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="h-full w-full rounded-[24px] object-cover"
+                    className="h-full w-full object-cover"
                   />
                 </button>
               ))}
@@ -88,21 +99,21 @@ export default function HomePage() {
 
             <div className="mt-[14px] flex h-[128px] w-[353px] items-center rounded-[24px] border-[2px] border-black bg-white">
               <CountBox
-                count={counts.made}
+                count={homeInfo.createdCardCount}
                 label="내가 만든 카드"
                 color="#F6DC4D"
                 labelWidth="w-[78px]"
               />
               <Divider />
               <CountBox
-                count={counts.received}
+                count={homeInfo.receivedCardCount}
                 label="받은 카드"
                 color="#78A6E8"
                 labelWidth="w-[46px]"
               />
               <Divider />
               <CountBox
-                count={counts.sendable}
+                count={homeInfo.sendableCardCount}
                 label="보낼 수 있는 카드"
                 color="#A66BE8"
                 labelWidth="w-[99px]"
