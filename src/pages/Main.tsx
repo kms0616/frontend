@@ -64,7 +64,7 @@ export default function HomePage() {
           <h2 className="mb-[44px] text-[24px] font-bold leading-[34px] text-black">
             <span className="bg-[#D9F3DD]">{homeInfo.nickname}님</span>의
             <br />
-            생존 우편
+            여름 생존 우편
           </h2>
 
           <div className="flex flex-col items-center">
