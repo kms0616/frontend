@@ -74,8 +74,67 @@ const EFFECT_OPTIONS = [
     textColor: "text-[#FC504C]",
     icon: patienceIcon,
   },
-];
+] as const;
 
+// ---- AI 추천 API 연동 관련 ----
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+
+function getUserId(): string {
+  // TODO: 실제 유저 인증/컨텍스트가 생기면 이 부분을 교체하세요.
+  return localStorage.getItem("userId") ?? "1";
+}
+
+interface AIEffectRecommendationResponse {
+  primaryEffectTypeId: number;
+  effects: {
+    effectTypeId: number;
+    code?: string;
+    name?: string;
+    icon?: string;
+    color?: string;
+    level: number;
+    displayOrder: number;
+  }[];
+  scores?: {
+    effectTypeId: number;
+    code?: string;
+    name?: string;
+    score: number;
+  }[];
+}
+
+async function fetchEffectRecommendations(payload: {
+  title: string;
+  description: string;
+  recommendedSituation: string;
+}): Promise<AIEffectRecommendationResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/effect-recommendations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-USER-ID": getUserId(),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    let message = "AI 추천에 실패했습니다.";
+    try {
+      const err = await res.json();
+      if (err?.message) message = err.message;
+    } catch {
+      // 응답 파싱 실패 시 기본 메시지 사용
+    }
+    throw new Error(message);
+  }
+
+  return res.json();
+}
+// EFFECT_OPTIONS 정의 아래, 컴포넌트 밖에 추가
+type EffectId = "cooling" | "mental" | "stamina" | "wealth" | "endurance";
+
+type EffectsState = Record<EffectId, { active: boolean; level: number }>;
 export default function SurvivalCreatePage({
   onOpenPreview,
 }: SurvivalCreatePageProps) {
@@ -85,9 +144,7 @@ export default function SurvivalCreatePage({
   const [situation, setSituation] = useState("");
   const [difficulty, setDifficulty] = useState(0);
 
-  const [effects, setEffects] = useState<
-    Record<string, { active: boolean; level: number }>
-  >({
+  const [effects, setEffects] = useState<EffectsState>({
     cooling: { active: false, level: 1 },
     mental: { active: false, level: 1 },
     stamina: { active: false, level: 1 },
@@ -98,7 +155,11 @@ export default function SurvivalCreatePage({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
 
-  const handleEffectClick = (id: string) => {
+  // AI 추천 관련 상태
+  const [isRecommending, setIsRecommending] = useState(false);
+  const [recommendError, setRecommendError] = useState<string | null>(null);
+
+  const handleEffectClick = (id: EffectId) => {
     setEffects((prev) => {
       const isActive = prev[id].active;
       const activeCount = Object.values(prev).filter((e) => e.active).length;
@@ -107,8 +168,54 @@ export default function SurvivalCreatePage({
     });
   };
 
-  const handleLevelChange = (id: string, level: number) => {
+  const handleLevelChange = (id: EffectId, level: number) => {
     setEffects((prev) => ({ ...prev, [id]: { ...prev[id], level } }));
+  };
+
+  const handleAIRecommend = async () => {
+    if (!name.trim()) {
+      alert("생존법 이름을 입력해주세요");
+      return;
+    }
+    if (!description.trim()) {
+      alert("설명을 입력해주세요");
+      return;
+    }
+
+    setIsRecommending(true);
+    setRecommendError(null);
+
+    try {
+      const result = await fetchEffectRecommendations({
+        title: name,
+        description,
+        recommendedSituation: situation,
+      });
+
+      setEffects((prev) => {
+        const reset: EffectsState = { ...prev };
+        (Object.keys(reset) as EffectId[]).forEach((key) => {
+          reset[key] = { ...reset[key], active: false };
+        });
+
+        result.effects.slice(0, 3).forEach((e) => {
+          const opt = EFFECT_OPTIONS.find(
+            (o) => o.effectTypeId === e.effectTypeId,
+          );
+          if (!opt) return;
+          const clampedLevel = Math.min(5, Math.max(1, e.level));
+          reset[opt.id as EffectId] = { active: true, level: clampedLevel };
+        });
+
+        return reset;
+      });
+    } catch (err) {
+      setRecommendError(
+        err instanceof Error ? err.message : "AI 추천에 실패했습니다.",
+      );
+    } finally {
+      setIsRecommending(false);
+    }
   };
 
   const handleOpenPreview = () => {
@@ -220,12 +327,27 @@ export default function SurvivalCreatePage({
         </div>
 
         <div className="mb-[24px]">
-          <label className="block text-[18px] font-[600] text-[#222] leading-[24px] mb-[8px]">
-            효과 선택
-          </label>
-          <p className="text-[14px] text-[#909090] mb-[16px]">
+          <div className="flex items-center justify-between mb-[8px]">
+            <label className="block text-[18px] font-[600] text-[#222] leading-[24px]">
+              효과 선택
+            </label>
+            <button
+              type="button"
+              onClick={handleAIRecommend}
+              disabled={isRecommending}
+              className="flex items-center gap-[4px] rounded-[12px] bg-[#4759A6] px-[12px] py-[6px] text-[13px] font-[600] text-white disabled:opacity-50"
+            >
+              {isRecommending ? "추천 중..." : "✨ AI 효과 추천받기"}
+            </button>
+          </div>
+          <p className="text-[14px] text-[#909090] mb-[8px]">
             1~3가지를 선택 후 레벨을 조절하세요
           </p>
+          {recommendError && (
+            <p className="text-[13px] text-[#FC504C] mb-[8px]">
+              {recommendError}
+            </p>
+          )}
 
           <div className="flex flex-col gap-[12px]">
             {EFFECT_OPTIONS.map((effect) => {
@@ -318,7 +440,9 @@ export default function SurvivalCreatePage({
 
         {/* 난이도 */}
         <div className="mb-[72px]">
-          <span className="block text-[18px] font-[600] text-[#222] leading-[24px] mb-[8px]">난이도</span>
+          <span className="block text-[18px] font-[600] text-[#222] leading-[24px] mb-[8px]">
+            난이도
+          </span>
           <div className="flex gap-[8px]">
             {[1, 2, 3, 4, 5].map((star) => {
               const isFilled = star <= difficulty;

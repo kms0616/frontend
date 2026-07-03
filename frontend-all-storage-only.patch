@@ -1,0 +1,63 @@
+diff --git a/src/components/FolderSelect.tsx b/src/components/FolderSelect.tsx
+index 953b1a2..9cb267c 100644
+--- a/src/components/FolderSelect.tsx
++++ b/src/components/FolderSelect.tsx
+@@ -66,8 +66,8 @@ const FolderSelect: React.FC<FolderSelectProps> = ({
+     if (pendingNewFolderName) {
+       onSelect(null, pendingNewFolderName);
+     } else {
+-      // selectedFolderId가 null이면 "전체" = 폴더 없이 저장 → folderId 0
+-      onSelect(selectedFolderId ?? 0);
++      // selectedFolderId가 null이면 "전체" = 폴더 지정 없이 저장
++      onSelect(selectedFolderId);
+     }
+   };
+ 
+diff --git a/src/pages/CardPreview.tsx b/src/pages/CardPreview.tsx
+index 403e9f0..b1c3e73 100644
+--- a/src/pages/CardPreview.tsx
++++ b/src/pages/CardPreview.tsx
+@@ -38,9 +38,9 @@ const CardPreview: React.FC<CardPreviewProps> = ({ isOpen, onClose, cardData, on
+         imageKey: "",
+         effects: cardData.effects,
+         favorite: false,
+-        folderId: folderId ?? 0,
+-        newFolderName: newFolderName ?? "",
+-        newFolderColor: newFolderName ? "#B4D9A7" : "",
++        folderId,
++        newFolderName: newFolderName ?? null,
++        newFolderColor: newFolderName ? "#B4D9A7" : null,
+       });
+ 
+       setIsFolderSelectOpen(false);
+@@ -167,4 +167,4 @@ const CardPreview: React.FC<CardPreviewProps> = ({ isOpen, onClose, cardData, on
+   );
+ };
+ 
+-export default CardPreview;
+\ No newline at end of file
++export default CardPreview;
+diff --git a/src/types/survivalCard.ts b/src/types/survivalCard.ts
+index 874317f..3998138 100644
+--- a/src/types/survivalCard.ts
++++ b/src/types/survivalCard.ts
+@@ -39,9 +39,9 @@ export interface CreateSurvivalCardRequest {
+     displayOrder: number;
+   }[];
+   favorite: boolean;
+-  folderId: number;
+-  newFolderName: string;
+-  newFolderColor: string;
++  folderId: number | null;
++  newFolderName: string | null;
++  newFolderColor: string | null;
+ }
+ 
+ // 카드 저장 응답
+@@ -52,4 +52,4 @@ export interface CreateSurvivalCardResponse {
+   message: string;
+ }
+ 
+-export type CardStatus = 'UNSENT' | 'SENT' | 'DELETE';
+\ No newline at end of file
++export type CardStatus = 'UNSENT' | 'SENT' | 'DELETE';
