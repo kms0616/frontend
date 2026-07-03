@@ -1,11 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-const userName = "반쯤 젖은 우산";
+import { getMySurvivalCards } from "../api/survivalCard";
 
-const counts = {
-  made: 0,
-  received: 0,
-  sendable: 0,
-};
+const userName = "반쯤 젖은 우산";
 
 const menuItems = [
   {
@@ -27,6 +24,28 @@ const menuItems = [
 
 export default function HomePage() {
   const navigate = useNavigate();
+
+  const [counts, setCounts] = useState({
+    made: 0,
+    received: 0, // TODO: "받은 카드" 목록 조회 API 나오면 연결
+    sendable: 0,
+  });
+
+  useEffect(() => {
+    getMySurvivalCards()
+      .then((all) => {
+        const sendable = all.filter((c) => c.status === "UNSENT").length;
+        setCounts((prev) => ({
+          ...prev,
+          made: all.length,
+          sendable,
+        }));
+      })
+      .catch((err) => {
+        console.error("카드 개수 조회 실패:", err.message);
+      });
+  }, []);
+
   return (
     <main className="mx-auto h-[852px] w-[393px] rounded-[48px] bg-[#FBFBFB] font-['Pretendard']">
       <section className="px-[20px] py-[32px]">

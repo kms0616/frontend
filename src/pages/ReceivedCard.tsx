@@ -1,58 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import FolderSelect from "../components/FolderSelect";
-
-const receivedCards = [
-  {
-    id: 1,
-    senderNickname: "반쯤 녹은 우산",
-    message: "쉽게 여름을 이겨낼 수 있는 방법이에요",
-    title: "아이스 아메리카노 방어술",
-    description: "손에 차가운 걸 쥐면 오늘이 조금 쉬워진다.",
-    recommendedSituation: "출근길",
-    createdAt: "2026.07.01",
-    difficulty: 2,
-    effects: [
-      {
-        name: "냉각력",
-        level: 3,
-        color: "#E5F7FE",
-        text: "#4759A6",
-        icon: "/images/cold.svg",
-        frame: "/images/cards/cold-frame.svg",
-      },
-      {
-        name: "자본력",
-        level: 5,
-        color: "#FFF5DE",
-        text: "#FFA300",
-        icon: "/images/money.svg",
-        frame: "/images/cards/money-frame.svg",
-      },
-      {
-        name: "인내력",
-        level: 3,
-        color: "#FFD0D0",
-        text: "#FF3333",
-        icon: "/images/fire.svg",
-        frame: "/images/cards/fire-frame.svg",
-      },
-    ],
-  },
-];
+import { getSurvivalCard } from "../api/survivalCard";
+import type { SurvivalCard } from "../types/survivalCard";
 
 export default function ReceivedCardPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [card, setCard] = useState<SurvivalCard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const card = receivedCards.find((card) => card.id === Number(id));
+  useEffect(() => {
+    if (!id) return;
+    getSurvivalCard(Number(id))
+      .then(setCard)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
 
-  if (!card) return null;
-
-  const mainEffect = card.effects.reduce((max, effect) =>
-    effect.level > max.level ? effect : max,
-  );
+  if (loading) return null; // 필요하면 로딩 스피너로 교체
+  if (error || !card) return null;
 
   return (
     <main className="relative mx-auto h-[852px] w-[393px] rounded-[48px] bg-[#FBFBFB]">
@@ -63,49 +32,20 @@ export default function ReceivedCardPage() {
             type="button"
             className="ml-[30px] h-[24px] w-[24px] cursor-pointer"
           >
-            <img
-              src="/images/back.svg"
-              alt="뒤로가기"
-              className="h-full w-full"
-            />
+            <img src="/images/back.svg" alt="뒤로가기" className="h-full w-full" />
           </button>
-
           <h1 className="ml-[102px] font-['Pretendard'] text-[18px] font-semibold text-black">
             받은 생존법
           </h1>
         </header>
 
         <div className="mt-[42px] px-[20px]">
-          <div className="h-[90px] w-[353px] rounded-[24px] border border-black px-[20px] py-[18px]">
-            <div className="flex h-[24px] items-center gap-[12px]">
-              <img
-                src="/images/email.svg"
-                alt=""
-                className="h-[20px] w-[20px]"
-              />
-              <p className="font-['Pretendard'] text-[14px] font-semibold text-black">
-                {card.senderNickname}님의 메시지
-              </p>
-            </div>
+          {/* senderNickname / message는 API에 없어서 임시로 비워둠 - 확인 필요 */}
 
-            <p className="mt-[8px] font-['Pretendard'] text-[16px] font-semibold text-black">
-              {card.message}
-            </p>
-          </div>
-
-          {/* 카드 */}
           <div className="relative mt-[24px] h-[600px] w-[353px] overflow-visible rounded-[12px]">
-            {/* 효과 중 가장 큰 효과의 프레임 */}
-            <img
-              src={mainEffect.frame}
-              alt=""
-              className="absolute left-[-1px] top-[-5px] h-[610px] w-[363px] max-w-none"
-            />
-
-            {/* 카드 위에 올라가는 실제 내용 */}
             <div className="absolute inset-0 px-[37px] pt-[52px] text-center">
               <img
-                src={mainEffect.icon}
+                src={card.primaryEffect.icon}
                 alt=""
                 className="mx-auto h-[92px] w-[92px]"
               />
@@ -119,21 +59,15 @@ export default function ReceivedCardPage() {
               </p>
 
               <div className="mt-[24px] flex justify-between font-['Pretendard'] text-[12px] text-[#9B9B9B]">
-                <span>{card.senderNickname}</span>
-                <span>{card.createdAt}</span>
+                <span>{new Date(card.createdAt).toLocaleDateString()}</span>
               </div>
 
               <div className="mt-[18px] flex items-center py-[6px]">
                 <span className="font-['Pretendard'] text-[12px] font-semibold text-[#777777]">
                   추천 상황
                 </span>
-
                 <span className="ml-auto flex items-center gap-[4px]">
-                  <img
-                    src="/images/recommend.svg"
-                    alt=""
-                    className="h-[14px] w-[14px]"
-                  />
+                  <img src="/images/recommend.svg" alt="" className="h-[14px] w-[14px]" />
                   <span className="font-['Pretendard'] text-[12px] font-semibold text-black">
                     {card.recommendedSituation}
                   </span>
@@ -144,24 +78,13 @@ export default function ReceivedCardPage() {
                 <span className="font-['Pretendard'] text-[12px] font-semibold text-[#777777]">
                   효과
                 </span>
-
                 <div className="mt-[8px] flex flex-wrap gap-[12px]">
                   {card.effects.map((effect) => (
                     <div
-                      key={effect.name}
-                      className="flex items-center gap-[4px] rounded-full px-[12px] py-[4px]"
-                      style={{ backgroundColor: effect.color }}
+                      key={effect.effectTypeId}
+                      className="flex items-center gap-[4px] rounded-full bg-gray-100 px-[12px] py-[4px]"
                     >
-                      <img
-                        src={effect.icon}
-                        alt=""
-                        className="h-[14px] w-[14px]"
-                      />
-
-                      <span
-                        className="font-['Pretendard'] text-[12px] font-semibold"
-                        style={{ color: effect.text }}
-                      >
+                      <span className="font-['Pretendard'] text-[12px] font-semibold text-gray-700">
                         {effect.name} {effect.level}
                       </span>
                     </div>
@@ -169,19 +92,13 @@ export default function ReceivedCardPage() {
                 </div>
               </div>
 
-              <div className="mt-[14px] flex items-center ">
+              <div className="mt-[14px] flex items-center">
                 <span className="font-['Pretendard'] text-[12px] font-semibold text-[#777777]">
                   난이도
                 </span>
-
                 <div className="ml-auto flex gap-[2px]">
                   {Array.from({ length: card.difficulty }).map((_, index) => (
-                    <img
-                      key={index}
-                      src="/images/star.svg"
-                      alt=""
-                      className="h-[16px] w-[16px]"
-                    />
+                    <img key={index} src="/images/star.svg" alt="" className="h-[16px] w-[16px]" />
                   ))}
                 </div>
               </div>
@@ -196,7 +113,6 @@ export default function ReceivedCardPage() {
             >
               건너뛰기
             </button>
-
             <button
               type="button"
               onClick={() => setIsFolderModalOpen(true)}
@@ -209,10 +125,7 @@ export default function ReceivedCardPage() {
       </section>
 
       {isFolderModalOpen && (
-        <FolderSelect
-          isOpen={isFolderModalOpen}
-          onClose={() => setIsFolderModalOpen(false)}
-        />
+        <FolderSelect isOpen={isFolderModalOpen} onClose={() => setIsFolderModalOpen(false)} />
       )}
     </main>
   );
