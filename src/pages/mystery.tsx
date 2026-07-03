@@ -251,8 +251,6 @@ function OpenedMysteryOption({ option }: { option: MysteryOption }) {
       />
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <img src={option.primaryEffect.icon} className="h-[44px] w-[44px]" />
-
         <p className="mt-[14px] font-['KIMM'] text-[14px] font-bold text-black">
           {option.primaryEffect.name}
         </p>
