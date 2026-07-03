@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 
-export default function CardStorage() {
+interface CardStorageProps{
+    onFolderClick?: (folderName: string) => void;
+}
+
+export default function CardStorage({onFolderClick}: CardStorageProps) {
   const [folders, setFolders] = useState([
     { id: 1, name: '기본 폴더', bgColor: 'bg-[#FF7474]', frontColor: 'bg-[#FBB]' },
     { id: 2, name: '해본 카드', bgColor: 'bg-[#E1D145]', frontColor: 'bg-[#F3E888]' },
@@ -39,8 +43,7 @@ export default function CardStorage() {
 
   return (
     <main className="mx-auto w-[393px] h-[881px] bg-[#FBFBFB] rounded-[48px] overflow-y-auto font-['Pretendard'] relative shadow-lg">
-      
-      {/* 헤더 영역 */}
+    
       <header className='flex items-center w-full px-[20px] py-[8px] mt-[54px] mb-[70px]'>
         <button className="mr-auto">
           <div>
@@ -52,12 +55,13 @@ export default function CardStorage() {
         <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-[600]">보관함</h1>
       </header>
 
-      {/* 폴더 그리드 영역 */}
       <section className="px-[20px] mt-[10px] grid grid-cols-2 gap-x-[16px] gap-y-[32px] pb-[40px]">
         
-        {/* 1. 생성된 폴더들 렌더링 */}
+        {/* 폴더 3가지 */}
         {folders.map((folder) => (
-          <div key={folder.id} className="relative w-full aspect-[3/4] mt-[12px] cursor-pointer">
+          <div key={folder.id}
+          onClick={() => onFolderClick && onFolderClick(folder.name)}
+          className="relative w-full aspect-[3/4] mt-[12px] cursor-pointer">
             <div className={`absolute top-[-27px] left-[0%] right-[0%] bottom-[27px] rounded-[24px] border border-black ${folder.bgColor}`} />
             <div className={`absolute top-[-18px] left-[0%] right-[0%] bottom-[18px] rounded-[24px] border border-black ${folder.bgColor}`} />
             <div className={`absolute top-[-9px] left-[0%] right-[0%] bottom-[9px] rounded-[24px] border border-black ${folder.bgColor}`} />
@@ -84,7 +88,7 @@ export default function CardStorage() {
           </div>
         ))}
 
-        {/* 2. 폴더 추가 버튼 */}
+        {/* 폴더 추가 */}
         <div 
           className="relative w-full aspect-[3/4] mt-[12px] cursor-pointer opacity-[0.3]"
           onClick={() => {
@@ -107,12 +111,10 @@ export default function CardStorage() {
                 <path d={cardBorderPath} stroke="#000" strokeWidth="1.5" strokeLinejoin="round"/>
               </svg>
 
-            {/* 내부 콘텐츠 분기 처리 */}
             <div className="relative z-10 flex flex-col items-center justify-center w-full px-[10px]">
               <div className="mb-[40px] w-[73px] h-[1px] bg-[#000]" />
               
               {!isAdding ? (
-                // 2-A. 기본 '폴더 추가' 상태
                 <div className="flex flex-col items-center gap-[8px]">
                   <div className="w-[32px] h-[32px] rounded-full border-[1.5px] border-[#000] flex items-center justify-center">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -123,7 +125,6 @@ export default function CardStorage() {
                   <span className="text-[12px] font-[600] text-[#000]">폴더 추가</span>
                 </div>
               ) : (
-                // 2-B. 클릭 후 '입력 모드' 상태
                 <div className="flex flex-col items-center gap-[8px] w-full">
                   <input
                     autoFocus
