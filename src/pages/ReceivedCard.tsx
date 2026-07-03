@@ -1,17 +1,74 @@
 import { useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import FolderSelect from "../components/FolderSelect";
-import { addCardToFolder } from "../api/folder";
-import { getEffectMeta } from "../constants/effects";
-import type { SurvivalCard } from "../types/survivalCard";
+
+type ReceivedCard = {
+  collectionCardId: number;
+  cardId: number;
+  title: string;
+  description: string;
+  recommendedSituation: string;
+  difficulty: number;
+  imageUrl: string;
+  message: string;
+  authorUserId: number;
+  authorNickname: string;
+  primaryEffect: {
+    effectTypeId: number;
+    name: string;
+    color: string;
+    icon: string;
+  };
+  effects: {
+    effectTypeId: number;
+    name: string;
+    level: number;
+  }[];
+  createdAt: string;
+};
+
+const effectAssetMap: Record<
+  number,
+  { color: string; text: string; icon: string; frame: string }
+> = {
+  1: {
+    color: "#E5F7FE",
+    text: "#4759A6",
+    icon: "/images/cold.svg",
+    frame: "/images/cards/cold-frame.svg",
+  },
+  2: {
+    color: "#F3EDFD",
+    text: "#A27DDB",
+    icon: "/images/mind.svg",
+    frame: "/images/cards/mind-frame.svg",
+  },
+  3: {
+    color: "#E4FAED",
+    text: "#00C772",
+    icon: "/images/energy.svg",
+    frame: "/images/cards/energy-frame.svg",
+  },
+  4: {
+    color: "#FFF5DE",
+    text: "#FFA300",
+    icon: "/images/money.svg",
+    frame: "/images/cards/money-frame.svg",
+  },
+  5: {
+    color: "#FFD0D0",
+    text: "#FF3333",
+    icon: "/images/fire.svg",
+    frame: "/images/cards/fire-frame.svg",
+  },
+};
 
 export default function ReceivedCardPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
 
   // mystery.tsx에서 navigate(..., { state: { receivedCard } })로 넘겨준 데이터
-  const card = location.state?.receivedCard as SurvivalCard | undefined;
+  const card = location.state?.receivedCard as ReceivedCard | undefined;
 
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -21,17 +78,37 @@ export default function ReceivedCardPage() {
     folderId: number | null,
     newFolderName?: string,
   ) => {
-    if (!id) return;
+    if (!card) return;
 
     setIsSaving(true);
     setSaveError(null);
 
     try {
-      const targetFolderId = folderId ?? 0;
+      const requestBody = newFolderName
+        ? {
+            target: "NEW_FOLDER",
+            newFolderName,
+            newFolderColor: "#B4D9A7",
+          }
+        : folderId === null || folderId === 0
+          ? { target: "ALL" }
+          : { target: "FOLDER", folderId };
 
-      await addCardToFolder(targetFolderId, {
-        collectionCardId: Number(id),
-      });
+      const response = await fetch(
+        `/api/collection-cards/${card.collectionCardId}/folder`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-USER-ID": localStorage.getItem("userId") ?? "",
+          },
+          body: JSON.stringify(requestBody),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`폴더 저장 실패: ${response.status}`);
+      }
 
       setIsFolderModalOpen(false);
       navigate("/main");
@@ -52,7 +129,18 @@ export default function ReceivedCardPage() {
     );
   }
 
-  const primaryMeta = getEffectMeta(card.primaryEffect.effectTypeId);
+  const mainEffect =
+    card.effects.find(
+      (effect) => effect.effectTypeId === card.primaryEffect.effectTypeId,
+    ) ?? card.effects[0];
+  const mainEffectAsset = effectAssetMap[
+    mainEffect?.effectTypeId ?? card.primaryEffect.effectTypeId
+  ] ?? {
+    color: "#E5F7FE",
+    text: "#4759A6",
+    icon: card.primaryEffect.icon,
+    frame: "/images/cards/cold-frame.svg",
+  };
 
   return (
     <main className="relative mx-auto h-[852px] w-[393px] rounded-[48px] bg-[#FBFBFB]">

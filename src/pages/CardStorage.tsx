@@ -6,33 +6,6 @@ import { lightenColor } from '../utils/color';
 interface CardStorageProps {
   onFolderClick?: (folder: Folder) => void;
 }
-type CollectionCard = {
-  collectionCardId: number;
-  cardId: number;
-  source: "CREATED" | "RECEIVED";
-  favorite: boolean;
-  title: string;
-  description: string;
-  recommendedSituation: string;
-  difficulty: number;
-  imageUrl: string;
-  message: string;
-  primaryEffect: {
-    effectTypeId: number;
-    name: string;
-    color: string;
-    icon: string;
-  };
-  collectedAt: string;
-};
-
-type Folder = {
-  id: number;
-  name: string;
-  bgColor: string;
-  frontColor: string;
-  count?: number;
-};
 
 export default function CardStorage({ onFolderClick }: CardStorageProps) {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -54,26 +27,32 @@ export default function CardStorage({ onFolderClick }: CardStorageProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const fetchFolders = () => {
-    setLoading(true);
+  useEffect(() => {
+    let cancelled = false;
+
     getFolders()
       .then((data) => {
+        if (cancelled) return;
         setFolders(
-          data.map((f) => ({
-            id: f.folderId,
-            name: f.name,
-            color: f.color,
-            cardCount: f.cardCount,
+          data.map((folder) => ({
+            id: folder.folderId,
+            name: folder.name,
+            color: folder.color,
+            cardCount: folder.cardCount,
           })),
         );
         setLoadError(null);
       })
-      .catch((err) => setLoadError(err.message))
-      .finally(() => setLoading(false));
-  };
+      .catch((error) => {
+        if (!cancelled) setLoadError(error.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  useEffect(() => {
-    fetchFolders();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleAddFolder = async () => {
@@ -246,7 +225,7 @@ export default function CardStorage({ onFolderClick }: CardStorageProps) {
                     setEditingFolder(folder);
                     setEditFolderName(folder.name);
                   } else {
-                    onFolderClick && onFolderClick(folder);
+                    onFolderClick?.(folder);
                   }
                 }}
                 className={`relative w-full aspect-[3/4] mt-[12px] cursor-pointer ${isEditMode ? 'hover:scale-105 transition-transform' : ''}`}

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CardPreview from "./CardPreview";
 import snowIcon from "../assets/snow.svg";
 import brainIcon from "../assets/brain.svg";
 import powerIconn from "../assets/power.svg";
@@ -29,7 +31,7 @@ export interface PreviewData {
 const EFFECT_OPTIONS = [
   {
     id: "cooling",
-    effectTypeId: 0,
+    effectTypeId: 1,
     label: "냉각력",
     activeColor: "border-[#00B8ED] bg-[#E5F7FE]",
     iconColor: "bg-[#00B8ED]",
@@ -38,7 +40,7 @@ const EFFECT_OPTIONS = [
   },
   {
     id: "mental",
-    effectTypeId: 1,
+    effectTypeId: 2,
     label: "정신력",
     activeColor: "border-[#A27DDB] bg-[#F3EDFD]",
     iconColor: "bg-[#A27DDB]",
@@ -47,7 +49,7 @@ const EFFECT_OPTIONS = [
   },
   {
     id: "stamina",
-    effectTypeId: 2,
+    effectTypeId: 3,
     label: "체력",
     activeColor: "border-[#00C772] bg-[#E4FAED]",
     iconColor: "bg-[#00C772]",
@@ -56,7 +58,7 @@ const EFFECT_OPTIONS = [
   },
   {
     id: "wealth",
-    effectTypeId: 3,
+    effectTypeId: 4,
     label: "자본력",
     activeColor: "border-[#FFA300] bg-[#FFF5DE]",
     iconColor: "bg-[#FFA300]",
@@ -65,7 +67,7 @@ const EFFECT_OPTIONS = [
   },
   {
     id: "endurance",
-    effectTypeId: 4,
+    effectTypeId: 5,
     label: "인내력",
     activeColor: "border-[#FC504C] bg-[#FEE]",
     iconColor: "bg-[#FC504C]",
@@ -77,6 +79,7 @@ const EFFECT_OPTIONS = [
 export default function SurvivalCreatePage({
   onOpenPreview,
 }: SurvivalCreatePageProps) {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [situation, setSituation] = useState("");
@@ -142,21 +145,23 @@ export default function SurvivalCreatePage({
     );
 
     // 3. 다음 화면(미리보기/폴더선택)으로 데이터 전달
-    onOpenPreview?.({
+    const nextPreviewData = {
       title: name,
       description,
       recommendedSituation: situation,
       difficulty,
       primaryEffectTypeId: primary.effectTypeId,
       effects: selected,
-    });
+    };
+    setPreviewData(nextPreviewData);
+    onOpenPreview?.(nextPreviewData);
     setIsPreviewOpen(true);
   };
 
   return (
     <main className="mx-auto min-h-screen w-[393px] overflow-y-auto rounded-[48px] bg-[#FBFBFB] font-['Pretendard']">
       <header className="flex items-center w-full px-[20px] py-[8px] mt-[54px] mb-[24px]">
-        <button className="mr-auto">
+        <button className="mr-auto" onClick={() => navigate("/main")}>
           <div>
             <svg
               width="22"

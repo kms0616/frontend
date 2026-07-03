@@ -29,9 +29,11 @@ const FolderSelect: React.FC<FolderSelectProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
     getFolders()
-      .then(setFolders)
+      .then((data) => {
+        setFolders(data);
+        setLoadError(null);
+      })
       .catch((err) => setLoadError(err.message))
       .finally(() => setLoading(false));
   }, [isOpen]);
