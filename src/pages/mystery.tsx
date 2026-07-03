@@ -232,23 +232,35 @@ export default function MysteryPage() {
 }
 
 function OpenedMysteryOption({ option }: { option: MysteryOption }) {
+  const frameMap: Record<number, string> = {
+    1: "/images/cards/cold-frame.svg",
+    2: "/images/cards/money-frame.svg",
+    3: "/images/cards/fire-frame.svg",
+  };
+
+  const frame =
+    frameMap[option.primaryEffect.effectTypeId] ??
+    "/images/cards/cold-frame.svg";
+
   return (
-    <div
-      className="relative flex h-[276px] w-[166px] flex-col items-center justify-center overflow-hidden rounded-[12px]"
-      style={{ backgroundColor: option.cardBackColor }}
-    >
+    <div className="relative h-[276px] w-[166px] overflow-hidden rounded-[12px]">
       <img
-        src={option.primaryEffect.icon}
-        alt={option.primaryEffect.name}
-        className="h-[48px] w-[48px]"
+        src={frame}
+        alt=""
+        className="absolute inset-0 h-full w-full object-fill"
       />
 
-      <p
-        className="mt-[16px] font-['KIMM'] text-[16px] font-bold"
-        style={{ color: option.primaryEffect.color }}
-      >
-        {option.primaryEffect.name}
-      </p>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <img
+          src={option.primaryEffect.icon}
+          alt={option.primaryEffect.name}
+          className="h-[44px] w-[44px]"
+        />
+
+        <p className="mt-[14px] font-['KIMM'] text-[14px] font-bold text-black">
+          {option.primaryEffect.name}
+        </p>
+      </div>
     </div>
   );
 }
